@@ -1,0 +1,42 @@
+# For more information, visit:
+# http://radicale.org/user_documentation/#apache-and-mod-wsgi
+
+#LoadModule wsgi_module modules/mod_wsgi.so
+#WSGISocketPrefix run/wsgi
+
+#<VirtualHost *:80>
+#    ServerName cal.localhost
+
+#    WSGIDaemonProcess radicale user=apache group=apache threads=1
+#    WSGIScriptAlias / /usr/share/radicale/radicale.wsgi
+
+#    <Directory /var/www>
+#        WSGIProcessGroup radicale
+#        WSGIApplicationGroup %{GLOBAL}
+#        AllowOverride None
+#        <IfModule mod_authz_core.c>
+#            # Apache 2.4
+#            Require local
+#        </IfModule>
+#        <IfModule !mod_authz_core.c>
+#            # Apache 2.2
+#            Order Deny,Allow
+#            Deny from all
+#            Allow from 127.0.0.1
+#            Allow from ::1
+#        </IfModule>
+#
+#        ## You may want to use apache's authentication
+#        AuthType Basic
+#        AuthName "Enter your credentials"
+#        AuthUserFile /path/to/httpdfile/
+#        AuthGroupFile /dev/null
+#        Require valid-user
+#        <IfModule rewrite_module>
+#            RewriteEngine On
+#            RewriteCond %{REMOTE_USER}%{PATH_INFO} !^([^/]+/)\1
+#            RewriteRule .* - [Forbidden]
+#        </IfModule>
+#
+#    </Directory>
+#</VirtualHost>

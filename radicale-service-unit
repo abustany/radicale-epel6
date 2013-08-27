@@ -1,0 +1,16 @@
+[Unit]
+Description=Radicale CalDAV and CardDAV server
+Documentation=http://radicale.org/documentation/
+After=network.target
+
+[Service]
+WorkingDirectory=/var/lib/radicale
+User=radicale
+Group=radicale
+UMask=0027
+Type=forking
+ExecStart=/usr/bin/radicale --daemon
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
