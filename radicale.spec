@@ -1,6 +1,6 @@
 Name:             radicale
 Version:          0.8
-Release:          3%{?dist}
+Release:          4%{?dist}
 Summary:          A simple CalDAV (calendar) and CardDAV (contact) server
 Group:            Applications/Internet
 License:          GPLv3+
@@ -115,6 +115,9 @@ exit 0
 %config(noreplace) %{_sysconfdir}/httpd/conf.d/%{name}.conf
 
 %changelog
+* Thu Oct 03 2013 Juan Orti Alcaine <jorti@fedoraproject.org> - 0.8-4
+- Update httpd config file. Bug #1014408
+
 * Tue Aug 27 2013 Juan Orti Alcaine <jorti@fedoraproject.org> - 0.8-3
 - Move .wsgi and .fcgi to main package
 

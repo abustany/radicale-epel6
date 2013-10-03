@@ -1,32 +1,22 @@
 # For more information, visit:
-# http://radicale.org/user_documentation/#apache-and-mod-wsgi
+# http://radicale.org/user_documentation/#idapache-and-mod-wsgi
 
-#LoadModule wsgi_module modules/mod_wsgi.so
-#WSGISocketPrefix run/wsgi
+# WARNING: To use this correctly, you will need to set:
+#    "setsebool -P httpd_can_read_write_radicale=1"
 
 #<VirtualHost *:80>
 #    ServerName cal.localhost
 
-#    WSGIDaemonProcess radicale user=apache group=apache threads=1
+#    WSGIDaemonProcess radicale user=radicale group=radicale threads=1 umask=0027
 #    WSGIScriptAlias / /usr/share/radicale/radicale.wsgi
 
-#    <Directory /var/www>
+#    <Location />
 #        WSGIProcessGroup radicale
 #        WSGIApplicationGroup %{GLOBAL}
 #        AllowOverride None
-#        <IfModule mod_authz_core.c>
-#            # Apache 2.4
-#            Require local
-#        </IfModule>
-#        <IfModule !mod_authz_core.c>
-#            # Apache 2.2
-#            Order Deny,Allow
-#            Deny from all
-#            Allow from 127.0.0.1
-#            Allow from ::1
-#        </IfModule>
 #
 #        ## You may want to use apache's authentication
+#        AuthBasicProvider file
 #        AuthType Basic
 #        AuthName "Enter your credentials"
 #        AuthUserFile /path/to/httpdfile/
@@ -38,5 +28,5 @@
 #            RewriteRule .* - [Forbidden]
 #        </IfModule>
 #
-#    </Directory>
+#    </Location>
 #</VirtualHost>
