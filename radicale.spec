@@ -9,6 +9,9 @@ Source0:          http://pypi.python.org/packages/source/R/Radicale/Radicale-%{v
 Source1:          %{name}-service-unit
 Source2:          %{name}-logrotate
 Source3:          %{name}-httpd
+Source4:          %{name}.te
+Source5:          %{name}.fc
+Source6:          %{name}.if
 # config adjustments for systemwide installation
 Patch0:           %{name}-%{version}-systemwide.patch
 
@@ -39,18 +42,46 @@ http://www.radicale.org
 %package httpd
 Summary:        httpd config for Radicale
 Requires:       %{name} = %{version}-%{release}
+Requires:       %{name}-selinux = %{version}-%{release}
 Requires:       httpd
 Requires:       mod_wsgi
 
 %description httpd
 httpd config for Radicale
 
+%package selinux
+Summary:        Selinux policy for Radicale
+Requires:       %{name} = %{version}-%{release}
+%{!?_selinux_policy_version: %global _selinux_policy_version %(sed -e 's,.*selinux-policy-\\([^/]*\\)/.*,\\1,' /usr/share/selinux/devel/policyhelp 2>/dev/null)}
+%if "%{_selinux_policy_version}" != ""
+Requires:      selinux-policy >= %{_selinux_policy_version}
+%endif
+Requires(post):   /usr/sbin/semodule, /sbin/restorecon, /sbin/fixfiles
+Requires(postun): /usr/sbin/semodule, /sbin/restorecon, /sbin/fixfiles
+BuildRequires: checkpolicy, selinux-policy-devel, /usr/share/selinux/devel/policyhelp
+
+%description selinux
+Selinux policy for Radicale
+
+%global selinux_types %(%{__awk} '/^#[[:space:]]*SELINUXTYPE=/,/^[^#]/ { if ($3 == "-") printf "%s ", $2 }' /etc/selinux/config 2>/dev/null)
+%global selinux_variants %([ -z "%{selinux_types}" ] && echo mls targeted || echo %{selinux_types})
+
 %prep
 %setup -q -n Radicale-%{version}
 %patch0 -p1
+mkdir SELinux
+cp -p %{SOURCE4} %{SOURCE5} %{SOURCE6} SELinux
 
 %build
 %{__python} setup.py build
+cd SELinux
+for selinuxvariant in %{selinux_variants}
+do
+    make NAME=${selinuxvariant} -f /usr/share/selinux/devel/Makefile
+    mv %{name}.pp %{name}.pp.${selinuxvariant}
+    make NAME=${selinuxvariant} -f /usr/share/selinux/devel/Makefile clean
+done
+cd -
 
 %install
 %{__python} setup.py install --skip-build --root %{buildroot}
@@ -78,6 +109,13 @@ install -D -p -m 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/logrotate.d/%{name}
 mkdir -p %{buildroot}%{_localstatedir}/log/%{name}
 touch %{buildroot}%{_localstatedir}/log/%{name}/%{name}.log
 
+for selinuxvariant in %{selinux_variants}
+do
+    install -d %{buildroot}%{_datadir}/selinux/${selinuxvariant}
+    install -p -m 644 SELinux/%{name}.pp.${selinuxvariant} \
+        %{buildroot}%{_datadir}/selinux/${selinuxvariant}/%{name}.pp
+done
+
 %pre
 getent group %{name} >/dev/null || groupadd -r %{name}
 getent passwd %{name} >/dev/null || \
@@ -93,6 +131,29 @@ exit 0
 
 %postun
 %systemd_postun_with_restart %{name}.service 
+
+%post selinux
+for selinuxvariant in %{selinux_variants}
+do
+  /usr/sbin/semodule -s ${selinuxvariant} -i \
+    %{_datadir}/selinux/${selinuxvariant}/%{name}.pp &> /dev/null || :
+done
+/sbin/fixfiles -R %{name} restore || :
+/sbin/fixfiles -R %{name}-httpd restore || :
+#/sbin/restorecon -R %{_localstatedir}/cache/%{name} || :
+
+%postun selinux
+if [ $1 -eq 0 ] ; then
+  for selinuxvariant in %{selinux_variants}
+  do
+    /usr/sbin/semodule -s ${selinuxvariant} -r %{name} &> /dev/null || :
+  done
+  /sbin/fixfiles -R %{name} restore || :
+  /sbin/fixfiles -R %{name}-httpd restore || :
+  #[ -d %{_localstatedir}/cache/%{name} ]  && \
+  #  /sbin/restorecon -R %{_localstatedir}/cache/%{name} &> /dev/null || :
+fi
+
 
 %files
 %doc COPYING README NEWS.rst TODO.rst
@@ -114,9 +175,14 @@ exit 0
 %files httpd
 %config(noreplace) %{_sysconfdir}/httpd/conf.d/%{name}.conf
 
+%files selinux
+%defattr(-,root,root,0755)
+%doc SELinux/*
+%{_datadir}/selinux/*/%{name}.pp
+
 %changelog
 * Thu Oct 03 2013 Juan Orti Alcaine <jorti@fedoraproject.org> - 0.8-4
-- Update httpd config file. Bug #1014408
+- Update httpd config file and add SELinux policy. Bug #1014408
 
 * Tue Aug 27 2013 Juan Orti Alcaine <jorti@fedoraproject.org> - 0.8-3
 - Move .wsgi and .fcgi to main package
