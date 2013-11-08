@@ -1,6 +1,6 @@
 Name:             radicale
 Version:          0.8
-Release:          4%{?dist}
+Release:          5%{?dist}
 Summary:          A simple CalDAV (calendar) and CardDAV (contact) server
 Group:            Applications/Internet
 License:          GPLv3+
@@ -52,7 +52,12 @@ httpd config for Radicale
 %package selinux
 Summary:        Selinux policy for Radicale
 Requires:       %{name} = %{version}-%{release}
+# Hardcode _selinux_policy_version in F20 because of #999584
+%if 0%{?fedora} == 20
+%global _selinux_policy_version 3.12.1-90
+%else
 %{!?_selinux_policy_version: %global _selinux_policy_version %(sed -e 's,.*selinux-policy-\\([^/]*\\)/.*,\\1,' /usr/share/selinux/devel/policyhelp 2>/dev/null)}
+%endif
 %if "%{_selinux_policy_version}" != ""
 Requires:      selinux-policy >= %{_selinux_policy_version}
 %endif
@@ -181,6 +186,9 @@ fi
 %{_datadir}/selinux/*/%{name}.pp
 
 %changelog
+* Fri Nov 08 2013 Juan Orti Alcaine <jorti@fedoraproject.org> - 0.8-5
+- Hardcode _selinux_policy_version in F20 because of #999584
+
 * Thu Oct 03 2013 Juan Orti Alcaine <jorti@fedoraproject.org> - 0.8-4
 - Update httpd config file and add SELinux policy. Bug #1014408
 
