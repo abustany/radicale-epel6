@@ -1,6 +1,6 @@
 Name:             radicale
 Version:          0.8
-Release:          5%{?dist}
+Release:          6%{?dist}
 Summary:          A simple CalDAV (calendar) and CardDAV (contact) server
 Group:            Applications/Internet
 License:          GPLv3+
@@ -42,7 +42,6 @@ http://www.radicale.org
 %package httpd
 Summary:        httpd config for Radicale
 Requires:       %{name} = %{version}-%{release}
-Requires:       %{name}-selinux = %{version}-%{release}
 Requires:       httpd
 Requires:       mod_wsgi
 
@@ -61,8 +60,8 @@ Requires:       %{name} = %{version}-%{release}
 %if "%{_selinux_policy_version}" != ""
 Requires:      selinux-policy >= %{_selinux_policy_version}
 %endif
-Requires(post):   /usr/sbin/semodule, /sbin/restorecon, /sbin/fixfiles
-Requires(postun): /usr/sbin/semodule, /sbin/restorecon, /sbin/fixfiles
+Requires(post):   /usr/sbin/semodule, /sbin/fixfiles
+Requires(postun): /usr/sbin/semodule, /sbin/fixfiles
 BuildRequires: checkpolicy, selinux-policy-devel, /usr/share/selinux/devel/policyhelp
 
 %description selinux
@@ -143,9 +142,8 @@ do
   /usr/sbin/semodule -s ${selinuxvariant} -i \
     %{_datadir}/selinux/${selinuxvariant}/%{name}.pp &> /dev/null || :
 done
-/sbin/fixfiles -R %{name} restore || :
-/sbin/fixfiles -R %{name}-httpd restore || :
-#/sbin/restorecon -R %{_localstatedir}/cache/%{name} || :
+/sbin/fixfiles -R %{name} restore > /dev/null 2>&1 || :
+/sbin/fixfiles -R %{name}-httpd restore > /dev/null 2>&1 || :
 
 %postun selinux
 if [ $1 -eq 0 ] ; then
@@ -153,10 +151,8 @@ if [ $1 -eq 0 ] ; then
   do
     /usr/sbin/semodule -s ${selinuxvariant} -r %{name} &> /dev/null || :
   done
-  /sbin/fixfiles -R %{name} restore || :
-  /sbin/fixfiles -R %{name}-httpd restore || :
-  #[ -d %{_localstatedir}/cache/%{name} ]  && \
-  #  /sbin/restorecon -R %{_localstatedir}/cache/%{name} &> /dev/null || :
+  /sbin/fixfiles -R %{name} restore > /dev/null 2>&1 || :
+  /sbin/fixfiles -R %{name}-httpd restore > /dev/null 2>&1 || :
 fi
 
 
@@ -186,6 +182,9 @@ fi
 %{_datadir}/selinux/*/%{name}.pp
 
 %changelog
+* Fri Nov 29 2013 Juan Orti Alcaine <jorti@fedoraproject.org> - 0.8-6
+- SELinux policy 1.0.1 fix bug #1035925
+
 * Fri Nov 08 2013 Juan Orti Alcaine <jorti@fedoraproject.org> - 0.8-5
 - Hardcode _selinux_policy_version in F20 because of #999584
 

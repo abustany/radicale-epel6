@@ -1,4 +1,4 @@
-policy_module(radicale, 1.0.0)
+policy_module(radicale, 1.0.1)
 
 gen_require(`
     type httpd_t;
@@ -35,6 +35,7 @@ systemd_unit_file(radicale_unit_file_t)
 #
 allow radicale_t self:fifo_file rw_fifo_file_perms;
 allow radicale_t self:unix_stream_socket create_stream_socket_perms;
+allow radicale_t self:tcp_socket create_stream_socket_perms;
 
 manage_dirs_pattern(radicale_t, radicale_log_t, radicale_log_t)
 manage_files_pattern(radicale_t, radicale_log_t, radicale_log_t)
@@ -71,3 +72,9 @@ if (httpd_can_read_write_radicale) {
 } 
 
 miscfiles_read_localization(radicale_t)
+dev_read_urand(radicale_t)
+dev_read_rand(radicale_t)
+auth_use_nsswitch(radicale_t)
+corecmd_exec_shell(radicale_t)
+libs_exec_ldconfig(radicale_t)
+kernel_read_system_state(radicale_t)
