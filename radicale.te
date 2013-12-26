@@ -1,4 +1,4 @@
-policy_module(radicale, 1.0.1)
+policy_module(radicale, 1.0.2)
 
 gen_require(`
     type httpd_t;
@@ -29,6 +29,9 @@ files_type(radicale_etc_t);
 type radicale_unit_file_t;
 systemd_unit_file(radicale_unit_file_t)
 
+type radicale_port_t;
+corenet_port(radicale_port_t)
+
 ########################################
 #
 # radicale local policy
@@ -36,6 +39,8 @@ systemd_unit_file(radicale_unit_file_t)
 allow radicale_t self:fifo_file rw_fifo_file_perms;
 allow radicale_t self:unix_stream_socket create_stream_socket_perms;
 allow radicale_t self:tcp_socket create_stream_socket_perms;
+
+allow radicale_t radicale_port_t:tcp_socket name_bind;
 
 manage_dirs_pattern(radicale_t, radicale_log_t, radicale_log_t)
 manage_files_pattern(radicale_t, radicale_log_t, radicale_log_t)

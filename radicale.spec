@@ -1,6 +1,6 @@
 Name:             radicale
 Version:          0.8
-Release:          6%{?dist}
+Release:          7%{?dist}
 Summary:          A simple CalDAV (calendar) and CardDAV (contact) server
 Group:            Applications/Internet
 License:          GPLv3+
@@ -60,8 +60,8 @@ Requires:       %{name} = %{version}-%{release}
 %if "%{_selinux_policy_version}" != ""
 Requires:      selinux-policy >= %{_selinux_policy_version}
 %endif
-Requires(post):   /usr/sbin/semodule, /sbin/fixfiles
-Requires(postun): /usr/sbin/semodule, /sbin/fixfiles
+Requires(post):   /usr/sbin/semodule, /sbin/fixfiles, policycoreutils-python
+Requires(postun): /usr/sbin/semodule, /sbin/fixfiles, policycoreutils-python
 BuildRequires: checkpolicy, selinux-policy-devel, /usr/share/selinux/devel/policyhelp
 
 %description selinux
@@ -142,11 +142,14 @@ do
   /usr/sbin/semodule -s ${selinuxvariant} -i \
     %{_datadir}/selinux/${selinuxvariant}/%{name}.pp &> /dev/null || :
 done
+# http://danwalsh.livejournal.com/10607.html
+semanage port -a -t radicale_port_t -p tcp 5232
 /sbin/fixfiles -R %{name} restore > /dev/null 2>&1 || :
 /sbin/fixfiles -R %{name}-httpd restore > /dev/null 2>&1 || :
 
 %postun selinux
 if [ $1 -eq 0 ] ; then
+  semanage port -d -p tcp 5232
   for selinuxvariant in %{selinux_variants}
   do
     /usr/sbin/semodule -s ${selinuxvariant} -r %{name} &> /dev/null || :
@@ -182,6 +185,9 @@ fi
 %{_datadir}/selinux/*/%{name}.pp
 
 %changelog
+* Wed Dec 25 2013 Juan Orti Alcaine <jorti@fedoraproject.org> - 0.8-7
+- SELinux policy 1.0.2
+
 * Fri Nov 29 2013 Juan Orti Alcaine <jorti@fedoraproject.org> - 0.8-6
 - SELinux policy 1.0.1 fix bug #1035925
 

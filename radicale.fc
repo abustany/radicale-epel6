@@ -8,3 +8,4 @@
 
 /etc/radicale(/.*)?         gen_context(system_u:object_r:radicale_etc_t,s0)
 
+#portcon tcp     5232   gen_context(system_u:object_r:radicale_port_t,s0)
