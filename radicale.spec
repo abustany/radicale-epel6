@@ -1,6 +1,6 @@
 Name:             radicale
 Version:          0.8
-Release:          7%{?dist}
+Release:          8%{?dist}
 Summary:          A simple CalDAV (calendar) and CardDAV (contact) server
 Group:            Applications/Internet
 License:          GPLv3+
@@ -185,6 +185,9 @@ fi
 %{_datadir}/selinux/*/%{name}.pp
 
 %changelog
+* Tue Apr 29 2014 Juan Orti Alcaine <jorti@fedoraproject.org> - 0.8-8
+- Add PrivateDevices to unit file
+
 * Wed Dec 25 2013 Juan Orti Alcaine <jorti@fedoraproject.org> - 0.8-7
 - SELinux policy 1.0.2
 

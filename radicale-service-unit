@@ -11,6 +11,7 @@ UMask=0027
 Type=forking
 ExecStart=/usr/bin/radicale --daemon
 PrivateTmp=true
+PrivateDevices=true
 
 [Install]
 WantedBy=multi-user.target
