@@ -1,6 +1,6 @@
 Name:             radicale
 Version:          0.8
-Release:          9%{?dist}
+Release:          10%{?dist}
 Summary:          A simple CalDAV (calendar) and CardDAV (contact) server
 Group:            Applications/Internet
 License:          GPLv3+
@@ -121,6 +121,9 @@ fi
 %config(noreplace) %{_sysconfdir}/httpd/conf.d/%{name}.conf
 
 %changelog
+* Sun Jun 15 2014 Adrien Bustany <adrien@bustay.org> - 0.8-10
+- Add CentOS support
+
 * Sun Jun 08 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.8-9
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
 
