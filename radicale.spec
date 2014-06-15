@@ -9,9 +9,6 @@ Source0:          http://pypi.python.org/packages/source/R/Radicale/Radicale-%{v
 Source1:          %{name}.init
 Source2:          %{name}-logrotate
 Source3:          %{name}-httpd
-Source4:          %{name}.te
-Source5:          %{name}.fc
-Source6:          %{name}.if
 # config adjustments for systemwide installation
 Patch0:           %{name}-%{version}-systemwide.patch
 Patch1:           %{name}-%{version}-pidfile.patch
@@ -49,46 +46,13 @@ Requires:       mod_wsgi
 %description httpd
 httpd config for Radicale
 
-%package selinux
-Summary:        Selinux policy for Radicale
-Requires:       %{name} = %{version}-%{release}
-# Hardcode _selinux_policy_version in F20 because of #999584
-%if 0%{?fedora} == 20
-%global _selinux_policy_version 3.12.1-90
-%else
-%{!?_selinux_policy_version: %global _selinux_policy_version %(sed -e 's,.*selinux-policy-\\([^/]*\\)/.*,\\1,' /usr/share/selinux/devel/policyhelp 2>/dev/null)}
-%endif
-%if "%{_selinux_policy_version}" != ""
-Requires:      selinux-policy >= %{_selinux_policy_version}
-%endif
-Requires(post):   /usr/sbin/semodule, /sbin/fixfiles, policycoreutils-python
-Requires(postun): /usr/sbin/semodule, /sbin/fixfiles, policycoreutils-python
-BuildRequires: checkpolicy, selinux-policy-devel, /usr/share/selinux/devel/policyhelp
-
-%description selinux
-Selinux policy for Radicale
-
-%global selinux_types %(%{__awk} '/^#[[:space:]]*SELINUXTYPE=/,/^[^#]/ { if ($3 == "-") printf "%s ", $2 }' /etc/selinux/config 2>/dev/null)
-%global selinux_variants %([ -z "%{selinux_types}" ] && echo mls targeted || echo %{selinux_types})
-
 %prep
 %setup -q -n Radicale-%{version}
 %patch0 -p1
 %patch1 -p1
 
-mkdir SELinux
-cp -p %{SOURCE4} %{SOURCE5} %{SOURCE6} SELinux
-
 %build
 %{__python} setup.py build
-cd SELinux
-for selinuxvariant in %{selinux_variants}
-do
-    make NAME=${selinuxvariant} -f /usr/share/selinux/devel/Makefile
-    mv %{name}.pp %{name}.pp.${selinuxvariant}
-    make NAME=${selinuxvariant} -f /usr/share/selinux/devel/Makefile clean
-done
-cd -
 
 %install
 %{__python} setup.py install --skip-build --root %{buildroot}
@@ -117,13 +81,6 @@ mkdir -p %{buildroot}%{_localstatedir}/log/%{name}
 mkdir -p %{buildroot}%{_localstatedir}/run/%{name}
 touch %{buildroot}%{_localstatedir}/log/%{name}/%{name}.log
 
-for selinuxvariant in %{selinux_variants}
-do
-    install -d %{buildroot}%{_datadir}/selinux/${selinuxvariant}
-    install -p -m 644 SELinux/%{name}.pp.${selinuxvariant} \
-        %{buildroot}%{_datadir}/selinux/${selinuxvariant}/%{name}.pp
-done
-
 %pre
 getent group %{name} >/dev/null || groupadd -r %{name}
 getent passwd %{name} >/dev/null || \
@@ -141,29 +98,6 @@ if [ $1 = 0 ] ; then
     /sbin/service radicale stop >/dev/null 2>&1
     /sbin/chkconfig --del radicale
 fi
-
-%post selinux
-for selinuxvariant in %{selinux_variants}
-do
-  /usr/sbin/semodule -s ${selinuxvariant} -i \
-    %{_datadir}/selinux/${selinuxvariant}/%{name}.pp &> /dev/null || :
-done
-# http://danwalsh.livejournal.com/10607.html
-semanage port -a -t radicale_port_t -p tcp 5232
-/sbin/fixfiles -R %{name} restore > /dev/null 2>&1 || :
-/sbin/fixfiles -R %{name}-httpd restore > /dev/null 2>&1 || :
-
-%postun selinux
-if [ $1 -eq 0 ] ; then
-  semanage port -d -p tcp 5232
-  for selinuxvariant in %{selinux_variants}
-  do
-    /usr/sbin/semodule -s ${selinuxvariant} -r %{name} &> /dev/null || :
-  done
-  /sbin/fixfiles -R %{name} restore > /dev/null 2>&1 || :
-  /sbin/fixfiles -R %{name}-httpd restore > /dev/null 2>&1 || :
-fi
-
 
 %files
 %doc COPYING README NEWS.rst TODO.rst
@@ -185,11 +119,6 @@ fi
 
 %files httpd
 %config(noreplace) %{_sysconfdir}/httpd/conf.d/%{name}.conf
-
-%files selinux
-%defattr(-,root,root,0755)
-%doc SELinux/*
-%{_datadir}/selinux/*/%{name}.pp
 
 %changelog
 * Sun Jun 08 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.8-9
