@@ -6,7 +6,7 @@ Group:            Applications/Internet
 License:          GPLv3+
 URL:              http://radicale.org
 Source0:          http://pypi.python.org/packages/source/R/Radicale/Radicale-%{version}.tar.gz
-Source1:          %{name}-service-unit
+Source1:          %{name}.init
 Source2:          %{name}-logrotate
 Source3:          %{name}-httpd
 Source4:          %{name}.te
@@ -18,13 +18,13 @@ Patch1:           %{name}-%{version}-pidfile.patch
 
 BuildArch:        noarch
 BuildRequires:    python2-devel
-BuildRequires:    systemd
 Requires(pre):    shadow-utils
-Requires(post):   systemd
-Requires(preun):  systemd
-Requires(postun): systemd
 Requires:         python-pam
 Requires:         python-ldap
+
+#Initscripts
+Requires(post): chkconfig
+Requires(preun): chkconfig initscripts
 
 %description
 The Radicale Project is a CalDAV (calendar) and CardDAV (contact) server. It
@@ -110,7 +110,7 @@ install -p -m 644 %{SOURCE3} %{buildroot}%{_sysconfdir}/httpd/conf.d/%{name}.con
 # Create folder where the calendar will be stored
 mkdir -p  %{buildroot}%{_sharedstatedir}/%{name}/
 
-install -D -p -m 644 %{SOURCE1} %{buildroot}%{_unitdir}/%{name}.service
+install -D -p -m 644 %{SOURCE1} %{buildroot}%{_initrddir}/%{name}
 install -D -p -m 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/logrotate.d/%{name}
 
 mkdir -p %{buildroot}%{_localstatedir}/log/%{name}
@@ -132,13 +132,15 @@ getent passwd %{name} >/dev/null || \
 exit 0
 
 %post
-%systemd_post %{name}.service
+if [ $1 -eq 1 ]; then
+    /sbin/chkconfig --add %{name}
+fi
 
 %preun
-%systemd_preun %{name}.service
-
-%postun
-%systemd_postun_with_restart %{name}.service 
+if [ $1 = 0 ] ; then
+    /sbin/service radicale stop >/dev/null 2>&1
+    /sbin/chkconfig --del radicale
+fi
 
 %post selinux
 for selinuxvariant in %{selinux_variants}
@@ -172,8 +174,8 @@ fi
 %{python_sitelib}/%{name}
 %{python_sitelib}/Radicale-*.egg-info
 %{_bindir}/%{name}
-%{_unitdir}/%{name}.service
 %dir %attr(700, %{name}, %{name}) %{_localstatedir}/run/%{name}
+%attr(755, root, root) %{_initrddir}/%{name}
 %dir %attr(750, %{name}, %{name}) %{_localstatedir}/log/%{name}
 %ghost %attr(640, %{name}, %{name}) %{_localstatedir}/log/%{name}/%{name}.log
 %dir %attr(750, %{name}, %{name}) %{_sharedstatedir}/%{name}/
