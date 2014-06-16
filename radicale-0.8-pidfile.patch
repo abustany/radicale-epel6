@@ -1,0 +1,11 @@
+--- a/config	2014-06-16 21:03:48.341025199 +0000
++++ b/config	2014-06-16 20:59:38.326080420 +0000
+@@ -18,7 +18,7 @@
+ # Daemon flag
+ daemon = True
+ # File storing the PID in daemon mode
+-pid =
++pid = /var/run/radicale/radicale.pid
+ # SSL flag, enable HTTPS protocol
+ ssl = False
+ # SSL certificate path

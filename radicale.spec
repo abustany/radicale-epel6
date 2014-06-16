@@ -14,6 +14,7 @@ Source5:          %{name}.fc
 Source6:          %{name}.if
 # config adjustments for systemwide installation
 Patch0:           %{name}-%{version}-systemwide.patch
+Patch1:           %{name}-%{version}-pidfile.patch
 
 BuildArch:        noarch
 BuildRequires:    python2-devel
@@ -73,6 +74,8 @@ Selinux policy for Radicale
 %prep
 %setup -q -n Radicale-%{version}
 %patch0 -p1
+%patch1 -p1
+
 mkdir SELinux
 cp -p %{SOURCE4} %{SOURCE5} %{SOURCE6} SELinux
 
@@ -111,6 +114,7 @@ install -D -p -m 644 %{SOURCE1} %{buildroot}%{_unitdir}/%{name}.service
 install -D -p -m 644 %{SOURCE2} %{buildroot}%{_sysconfdir}/logrotate.d/%{name}
 
 mkdir -p %{buildroot}%{_localstatedir}/log/%{name}
+mkdir -p %{buildroot}%{_localstatedir}/run/%{name}
 touch %{buildroot}%{_localstatedir}/log/%{name}/%{name}.log
 
 for selinuxvariant in %{selinux_variants}
@@ -169,6 +173,7 @@ fi
 %{python_sitelib}/Radicale-*.egg-info
 %{_bindir}/%{name}
 %{_unitdir}/%{name}.service
+%dir %attr(700, %{name}, %{name}) %{_localstatedir}/run/%{name}
 %dir %attr(750, %{name}, %{name}) %{_localstatedir}/log/%{name}
 %ghost %attr(640, %{name}, %{name}) %{_localstatedir}/log/%{name}/%{name}.log
 %dir %attr(750, %{name}, %{name}) %{_sharedstatedir}/%{name}/
